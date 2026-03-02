@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Prayer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5px;
+            margin: 0;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-bottom: 5px solid #000;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+        }
+        .header-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        .lyrics {
+            padding: 0 20px;
+            line-height: 1.6;
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+        .player-card {
+            background-color: #fff5f5;
+            margin: 15px 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .progress-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        input[type="range"] {
+            flex-grow: 1;
+            margin: 0 10px;
+            cursor: pointer;
+        }
+        .button-group {
+            display: flex;
+            justify-content: space-around;
+            padding: 0 10px;
+            gap: 5px;
+        }
+        .btn {
+            background: #808080; 
+            color: white;
+            border: 2px solid #555;
+            border-radius: 25px;
+            padding: 8px 0;
+            width: 24%;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .btn.downloaded {
+            background: #28a745 !important;
+            border-color: #1e7e34;
+        }
+        .btn:active {
+            transform: translateY(2px);
+        }
+        .lyrics-part { display: none; }
+        .lyrics-part.active { display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="header-title" id="main-title"> জন গণ মন</div>
+    <div id="stanza-container"></div>
+
+    <script>
+        // ৭টি স্ট্যাঞ্জার জন্য ৪টি আলাদা মিউজিক সোর্স
+        const musicData = {
+            1: { clip: 'https://www.dropbox.com/scl/fi/11zaury8trtv7e0kkm7ib/IntroPart1Clip.mp3?rlkey=zhs4hl63u4k0fzo0q2aibyyzk&st=k2j4cc1t&raw=1', segment: 'https://www.dropbox.com/scl/fi/cg0os3hptjnhhgbictz1u/IntroPart1Segment.mp3?rlkey=6i58iknbr8i553c7ep7rs4irf&st=x83vf7d2&raw=1', bengali: 'https://www.dropbox.com/scl/fi/tpfu8wlimvzr270dwas29/IntroBengali.mp3?rlkey=y6eqlkiyrimllrockw0ibe294&st=lod9hawd&raw=1', english: 'https://www.dropbox.com/scl/fi/kk2nalwka659twe7u68s6/IntroEnglish.mp3?rlkey=08dmntqwzy6clnajpc0h9yjgp&st=fdovs7on&raw=1' },
+            2: { clip: 'https://www.dropbox.com/scl/fi/bch4yt5v4rwsyku2mn95u/IntroPart2Clip.mp3?rlkey=j424yg3ipp3ph60b1m3jbikwj&st=9xmja7ik&raw=1', segment: 'https://www.dropbox.com/scl/fi/0dw2en2ttizgrrf9otra2/IntroPart2Segment.mp3?rlkey=8d25pp1wxnl6tbygr01lp0oxo&st=oj9ln1pi&raw=1', bengali: 'https://www.dropbox.com/scl/fi/tpfu8wlimvzr270dwas29/IntroBengali.mp3?rlkey=y6eqlkiyrimllrockw0ibe294&st=lod9hawd&raw=1', english: 'https://www.dropbox.com/scl/fi/kk2nalwka659twe7u68s6/IntroEnglish.mp3?rlkey=08dmntqwzy6clnajpc0h9yjgp&st=fdovs7on&raw=1' },
+            3: { clip: 'https://www.dropbox.com/scl/fi/eoxsi8b76z64u973hjww9/IntroPart3Clip.mp3?rlkey=7herablyaxupl81fetnbngpff&st=vbinxqef&raw=1', segment: 'https://www.dropbox.com/scl/fi/80yur1jbt49c8qf0wra8m/IntroPart3Segment.mp3?rlkey=w6cqdwtg41lpjpds780enrpuf&st=3w13lfns&raw=1', bengali: 'https://www.dropbox.com/scl/fi/tpfu8wlimvzr270dwas29/IntroBengali.mp3?rlkey=y6eqlkiyrimllrockw0ibe294&st=lod9hawd&raw=1', english: 'https://www.dropbox.com/scl/fi/kk2nalwka659twe7u68s6/IntroEnglish.mp3?rlkey=08dmntqwzy6clnajpc0h9yjgp&st=fdovs7on&raw=1' },
+            4: { clip: 'https://www.dropbox.com/scl/fi/7nry7xgsgarps3rz4pc1j/IntroPart4Clip.mp3?rlkey=v7mcukvl3wxjlwbae39ce3g37&st=bvrjsj75&raw=1', segment: 'https://www.dropbox.com/scl/fi/tqjpt9mkqh3jkanxl0hu0/IntroPart4Segment.mp3?rlkey=f9dzhx56bufi2o98kyg235idh&st=g4b8jqd8&raw=1', bengali: 'https://www.dropbox.com/scl/fi/tpfu8wlimvzr270dwas29/IntroBengali.mp3?rlkey=y6eqlkiyrimllrockw0ibe294&st=lod9hawd&raw=1', english: 'https://www.dropbox.com/scl/fi/kk2nalwka659twe7u68s6/IntroEnglish.mp3?rlkey=08dmntqwzy6clnajpc0h9yjgp&st=fdovs7on&raw=1' },
+            5: { clip: 'https://www.dropbox.com/scl/fi/b15fxbcw9kck1mwtvylsl/IntroPart5Clip.mp3?rlkey=5quinrtvj7sa47ess4b6v1kkr&st=r2aiz34o&raw=1', segment: 'https://www.dropbox.com/scl/fi/1jre7x729ett2r2fdsn88/IntroPart5Segment.mp3?rlkey=9jpgw5n68ennc16l8fppesgkh&st=9m4seg4q&raw=1', bengali: 'https://www.dropbox.com/scl/fi/tpfu8wlimvzr270dwas29/IntroBengali.mp3?rlkey=y6eqlkiyrimllrockw0ibe294&st=lod9hawd&raw=1', english: 'https://www.dropbox.com/scl/fi/kk2nalwka659twe7u68s6/IntroEnglish.mp3?rlkey=08dmntqwzy6clnajpc0h9yjgp&st=fdovs7on&raw=1' },
+            6: { clip: 'https://www.dropbox.com/scl/fi/ids1yl67f4p3vlj77h2rt/IntroPart6Clip.mp3?rlkey=is1j7tv4q5si3eoz11c3plb0i&st=kd4l01kd&raw=1', segment: 'https://www.dropbox.com/scl/fi/faj9eb6x75t6t1oulm5ul/IntroPart6Segment.mp3?rlkey=nnirpc8kewo6c66z8zlxau5rb&st=qhgf989t&raw=1', bengali: 'https://www.dropbox.com/scl/fi/tpfu8wlimvzr270dwas29/IntroBengali.mp3?rlkey=y6eqlkiyrimllrockw0ibe294&st=lod9hawd&raw=1', english: 'https://www.dropbox.com/scl/fi/kk2nalwka659twe7u68s6/IntroEnglish.mp3?rlkey=08dmntqwzy6clnajpc0h9yjgp&st=fdovs7on&raw=1' },
+            7: { clip: 'https://www.dropbox.com/scl/fi/4kmn0qdnp169p6sfs7cu9/IntroPart7Clip.mp3?rlkey=krj6yb1hykvpa9jgdf9452fl7&st=ruo7sp6d&raw=1', segment: 'https://www.dropbox.com/scl/fi/ycrsmf33gxz2crixvnahw/IntroPart7Segment.mp3?rlkey=oobp12tplr22rimxhl7ddaafl&st=n4jbe7pi&raw=1', bengali: 'https://www.dropbox.com/scl/fi/tpfu8wlimvzr270dwas29/IntroBengali.mp3?rlkey=y6eqlkiyrimllrockw0ibe294&st=lod9hawd&raw=1', english: 'https://www.dropbox.com/scl/fi/kk2nalwka659twe7u68s6/IntroEnglish.mp3?rlkey=08dmntqwzy6clnajpc0h9yjgp&st=fdovs7on&raw=1' },
+            8: { clip: 'https://www.dropbox.com/scl/fi/7dwvcv81dlrtn4z6akv6r/IntroPart8Clip.mp3?rlkey=do3itd4prmdglv8a9g8huxa1m&st=7bmkdjn4&raw=1', segment: 'https://www.dropbox.com/scl/fi/22ntodz6mfx6r1pwvxs03/IntroPart8Segment.mp3?rlkey=g64zulcwswflbo0espwotfytj&st=qqfr7laa&raw=1', bengali: 'https://www.dropbox.com/scl/fi/tpfu8wlimvzr270dwas29/IntroBengali.mp3?rlkey=y6eqlkiyrimllrockw0ibe294&st=lod9hawd&raw=1', english: 'https://www.dropbox.com/scl/fi/kk2nalwka659twe7u68s6/IntroEnglish.mp3?rlkey=08dmntqwzy6clnajpc0h9yjgp&st=fdovs7on&raw=1' }
+            
+        };
+
+        const stanzas = [
+            { text: " <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত। <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত। <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত।<br><br> ​মাই নেম ইজ সুমিত চন্দ্র রায়।<br> আমার নাম সুমিত চন্দ্র রায়।<br><br> ​মাই ফাদার্স নেম ইজ বিমল চন্দ্র রায়।<br> আমার বাবার নাম বিমল চন্দ্র রায়।<br><br> ​মাই মাদার্স নেম ইজ দিপালী রাণী রায়।<br> আমার মায়ের নাম দিপালী রাণী রায়।<br><br> ​আই স্টাডি অ্যাট রামগঞ্জ প্রাইমারি স্কুল।<br> আমি রামগঞ্জ প্রাথমিক বিদ্যালয়ে পড়ি।<br><br> ​আই লিভ ইন রামগঞ্জ ভিলেজ।<br> আমার বাড়ি রামগঞ্জ গ্রামে।<br><br> ​আই কাম টু স্কুল এভরি ডে।<br> আমি প্রতিদিন বিদ্যালয়ে আসি।<br><br> ​আই লাভ টু স্টাডি অ্যান্ড প্লে।<br> আমি পড়াশোনা করতে এবং খেলতে ভালোবাসি। <hr> ", id: 1 }, { text: " <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত।<br><br> ​মাই নেম ইজ সুমিত চন্দ্র রায়।<br> আমার নাম সুমিত চন্দ্র রায়। <hr> মাই নেম ইজ সুমিত চন্দ্র রায়।<br> আমার নাম সুমিত চন্দ্র রায়। <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত।<br><br> ​মাই নেম ইজ সুমিত চন্দ্র রায়।<br> আমার নাম সুমিত চন্দ্র রায়।<br><br> ​মাই ফাদার্স নেম ইজ বিমল চন্দ্র রায়।<br> আমার বাবার নাম বিমল চন্দ্র রায়।<br><br> ​মাই মাদার্স নেম ইজ দিপালী রাণী রায়।<br> আমার মায়ের নাম দিপালী রাণী রায়।<br><br> ​আই স্টাডি অ্যাট রামগঞ্জ প্রাইমারি স্কুল।<br> আমি রামগঞ্জ প্রাথমিক বিদ্যালয়ে পড়ি।<br><br> ​আই লিভ ইন রামগঞ্জ ভিলেজ।<br> আমার বাড়ি রামগঞ্জ গ্রামে।<br><br> ​আই কাম টু স্কুল এভরি ডে।<br> আমি প্রতিদিন বিদ্যালয়ে আসি।<br><br> ​আই লাভ টু স্টাডি অ্যান্ড প্লে।<br> আমি পড়াশোনা করতে এবং খেলতে ভালোবাসি। <hr> ", id: 2 }, { text: " <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত।<br><br> ​মাই নেম ইজ সুমিত চন্দ্র রায়।<br> আমার নাম সুমিত চন্দ্র রায়।<br><br> ​মাই ফাদার্স নেম ইজ বিমল চন্দ্র রায়।<br> আমার বাবার নাম বিমল চন্দ্র রায়। <hr> মাই ফাদার্স নেম ইজ বিমল চন্দ্র রায়।<br> আমার বাবার নাম বিমল চন্দ্র রায়। <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত।<br><br> ​মাই নেম ইজ সুমিত চন্দ্র রায়।<br> আমার নাম সুমিত চন্দ্র রায়।<br><br> ​মাই ফাদার্স নেম ইজ বিমল চন্দ্র রায়।<br> আমার বাবার নাম বিমল চন্দ্র রায়।<br><br> ​মাই মাদার্স নেম ইজ দিপালী রাণী রায়।<br> আমার মায়ের নাম দিপালী রাণী রায়।<br><br> ​আই স্টাডি অ্যাট রামগঞ্জ প্রাইমারি স্কুল।<br> আমি রামগঞ্জ প্রাথমিক বিদ্যালয়ে পড়ি।<br><br> ​আই লিভ ইন রামগঞ্জ ভিলেজ।<br> আমার বাড়ি রামগঞ্জ গ্রামে।<br><br> ​আই কাম টু স্কুল এভরি ডে।<br> আমি প্রতিদিন বিদ্যালয়ে আসি।<br><br> ​আই লাভ টু স্টাডি অ্যান্ড প্লে।<br> আমি পড়াশোনা করতে এবং খেলতে ভালোবাসি। <hr> ", id: 3 }, { text: " <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত।<br><br> ​মাই নেম ইজ সুমিত চন্দ্র রায়।<br> আমার নাম সুমিত চন্দ্র রায়।<br><br> ​মাই ফাদার্স নেম ইজ বিমল চন্দ্র রায়।<br> আমার বাবার নাম বিমল চন্দ্র রায়।<br><br> ​মাই মাদার্স নেম ইজ দিপালী রাণী রায়।<br> আমার মায়ের নাম দিপালী রাণী রায়। <hr> মাই মাদার্স নেম ইজ দিপালী রাণী রায়।<br> আমার মায়ের নাম দিপালী রাণী রায়। <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত।<br><br> ​মাই নেম ইজ সুমিত চন্দ্র রায়।<br> আমার নাম সুমিত চন্দ্র রায়।<br><br> ​মাই ফাদার্স নেম ইজ বিমল চন্দ্র রায়।<br> আমার বাবার নাম বিমল চন্দ্র রায়।<br><br> ​মাই মাদার্স নেম ইজ দিপালী রাণী রায়।<br> আমার মায়ের নাম দিপালী রাণী রায়।<br><br> ​আই স্টাডি অ্যাট রামগঞ্জ প্রাইমারি স্কুল।<br> আমি রামগঞ্জ প্রাথমিক বিদ্যালয়ে পড়ি।<br><br> ​আই লিভ ইন রামগঞ্জ ভিলেজ।<br> আমার বাড়ি রামগঞ্জ গ্রামে।<br><br> ​আই কাম টু স্কুল এভরি ডে।<br> আমি প্রতিদিন বিদ্যালয়ে আসি।<br><br> ​আই লাভ টু স্টাডি অ্যান্ড প্লে।<br> আমি পড়াশোনা করতে এবং খেলতে ভালোবাসি। <hr> ", id: 4 }, { text: " <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত।<br><br> ​মাই নেম ইজ সুমিত চন্দ্র রায়।<br> আমার নাম সুমিত চন্দ্র রায়।<br><br> ​মাই ফাদার্স নেম ইজ বিমল চন্দ্র রায়।<br> আমার বাবার নাম বিমল চন্দ্র রায়।<br><br> ​মাই মাদার্স নেম ইজ দিপালী রাণী রায়।<br> আমার মায়ের নাম দিপালী রাণী রায়।<br><br> ​আই স্টাডি অ্যাট রামগঞ্জ প্রাইমারি স্কুল।<br> আমি রামগঞ্জ প্রাথমিক বিদ্যালয়ে পড়ি। <hr> আই স্টাডি অ্যাট রামগঞ্জ প্রাইমারি স্কুল।<br> আমি রামগঞ্জ প্রাথমিক বিদ্যালয়ে পড়ি। <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত।<br><br> ​মাই নেম ইজ সুমিত চন্দ্র রায়।<br> আমার নাম সুমিত চন্দ্র রায়।<br><br> ​মাই ফাদার্স নেম ইজ বিমল চন্দ্র রায়।<br> আমার বাবার নাম বিমল চন্দ্র রায়।<br><br> ​মাই মাদার্স নেম ইজ দিপালী রাণী রায়।<br> আমার মায়ের নাম দিপালী রাণী রায়।<br><br> ​আই স্টাডি অ্যাট রামগঞ্জ প্রাইমারি স্কুল।<br> আমি রামগঞ্জ প্রাথমিক বিদ্যালয়ে পড়ি।<br><br> ​আই লিভ ইন রামগঞ্জ ভিলেজ।<br> আমার বাড়ি রামগঞ্জ গ্রামে।<br><br> ​আই কাম টু স্কুল এভরি ডে।<br> আমি প্রতিদিন বিদ্যালয়ে আসি।<br><br> ​আই লাভ টু স্টাডি অ্যান্ড প্লে।<br> আমি পড়াশোনা করতে এবং খেলতে ভালোবাসি। <hr> ", id: 5 }, { text: " <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত।<br><br> ​মাই নেম ইজ সুমিত চন্দ্র রায়।<br> আমার নাম সুমিত চন্দ্র রায়।<br><br> ​মাই ফাদার্স নেম ইজ বিমল চন্দ্র রায়।<br> আমার বাবার নাম বিমল চন্দ্র রায়।<br><br> ​মাই মাদার্স নেম ইজ দিপালী রাণী রায়।<br> আমার মায়ের নাম দিপালী রাণী রায়।<br><br> ​আই স্টাডি অ্যাট রামগঞ্জ প্রাইমারি স্কুল।<br> আমি রামগঞ্জ প্রাথমিক বিদ্যালয়ে পড়ি।<br><br> ​আই লিভ ইন রামগঞ্জ ভিলেজ।<br> আমার বাড়ি রামগঞ্জ গ্রামে। <hr> আই লিভ ইন রামগঞ্জ ভিলেজ।<br> আমার বাড়ি রামগঞ্জ গ্রামে। <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত।<br><br> ​মাই নেম ইজ সুমিত চন্দ্র রায়।<br> আমার নাম সুমিত চন্দ্র রায়।<br><br> ​মাই ফাদার্স নেম ইজ বিমল চন্দ্র রায়।<br> আমার বাবার নাম বিমল চন্দ্র রায়।<br><br> ​মাই মাদার্স নেম ইজ দিপালী রাণী রায়।<br> আমার মায়ের নাম দিপালী রাণী রায়।<br><br> ​আই স্টাডি অ্যাট রামগঞ্জ প্রাইমারি স্কুল।<br> আমি রামগঞ্জ প্রাথমিক বিদ্যালয়ে পড়ি।<br><br> ​আই লিভ ইন রামগঞ্জ ভিলেজ।<br> আমার বাড়ি রামগঞ্জ গ্রামে।<br><br> ​আই কাম টু স্কুল এভরি ডে।<br> আমি প্রতিদিন বিদ্যালয়ে আসি।<br><br> ​আই লাভ টু স্টাডি অ্যান্ড প্লে।<br> আমি পড়াশোনা করতে এবং খেলতে ভালোবাসি। <hr> ", id: 6 }, { text: " <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত।<br><br> ​মাই নেম ইজ সুমিত চন্দ্র রায়।<br> আমার নাম সুমিত চন্দ্র রায়।<br><br> ​মাই ফাদার্স নেম ইজ বিমল চন্দ্র রায়।<br> আমার বাবার নাম বিমল চন্দ্র রায়।<br><br> ​মাই মাদার্স নেম ইজ দিপালী রাণী রায়।<br> আমার মায়ের নাম দিপালী রাণী রায়।<br><br> ​আই স্টাডি অ্যাট রামগঞ্জ প্রাইমারি স্কুল।<br> আমি রামগঞ্জ প্রাথমিক বিদ্যালয়ে পড়ি।<br><br> ​আই লিভ ইন রামগঞ্জ ভিলেজ।<br> আমার বাড়ি রামগঞ্জ গ্রামে।<br><br> ​আই কাম টু স্কুল এভরি ডে।<br> আমি প্রতিদিন বিদ্যালয়ে আসি। <hr> আই কাম টু স্কুল এভরি ডে।<br> আমি প্রতিদিন বিদ্যালয়ে আসি। <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত।<br><br> ​মাই নেম ইজ সুমিত চন্দ্র রায়।<br> আমার নাম সুমিত চন্দ্র রায়।<br><br> ​মাই ফাদার্স নেম ইজ বিমল চন্দ্র রায়।<br> আমার বাবার নাম বিমল চন্দ্র রায়।<br><br> ​মাই মাদার্স নেম ইজ দিপালী রাণী রায়।<br> আমার মায়ের নাম দিপালী রাণী রায়।<br><br> ​আই স্টাডি অ্যাট রামগঞ্জ প্রাইমারি স্কুল।<br> আমি রামগঞ্জ প্রাথমিক বিদ্যালয়ে পড়ি।<br><br> ​আই লিভ ইন রামগঞ্জ ভিলেজ।<br> আমার বাড়ি রামগঞ্জ গ্রামে।<br><br> ​আই কাম টু স্কুল এভরি ডে।<br> আমি প্রতিদিন বিদ্যালয়ে আসি।<br><br> ​আই লাভ টু স্টাডি অ্যান্ড প্লে।<br> আমি পড়াশোনা করতে এবং খেলতে ভালোবাসি। <hr> ", id: 7 }, { text: " <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত।<br><br> ​মাই নেম ইজ সুমিত চন্দ্র রায়।<br> আমার নাম সুমিত চন্দ্র রায়।<br><br> ​মাই ফাদার্স নেম ইজ বিমল চন্দ্র রায়।<br> আমার বাবার নাম বিমল চন্দ্র রায়।<br><br> ​মাই মাদার্স নেম ইজ দিপালী রাণী রায়।<br> আমার মায়ের নাম দিপালী রাণী রায়।<br><br> ​আই স্টাডি অ্যাট রামগঞ্জ প্রাইমারি স্কুল।<br> আমি রামগঞ্জ প্রাথমিক বিদ্যালয়ে পড়ি।<br><br> ​আই লিভ ইন রামগঞ্জ ভিলেজ।<br> আমার বাড়ি রামগঞ্জ গ্রামে।<br><br> ​আই কাম টু স্কুল এভরি ডে।<br> আমি প্রতিদিন বিদ্যালয়ে আসি।<br><br> ​আই লাভ টু স্টাডি অ্যান্ড প্লে।<br> আমি পড়াশোনা করতে এবং খেলতে ভালোবাসি। <hr> আই লাভ টু স্টাডি অ্যান্ড প্লে।<br> আমি পড়াশোনা করতে এবং খেলতে ভালোবাসি। <hr> গুড মর্নিং এভরিওয়ান।<br> সবাইকে সুপ্রভাত।<br><br> ​মাই নেম ইজ সুমিত চন্দ্র রায়।<br> আমার নাম সুমিত চন্দ্র রায়।<br><br> ​মাই ফাদার্স নেম ইজ বিমল চন্দ্র রায়।<br> আমার বাবার নাম বিমল চন্দ্র রায়।<br><br> ​মাই মাদার্স নেম ইজ দিপালী রাণী রায়।<br> আমার মায়ের নাম দিপালী রাণী রায়।<br><br> ​আই স্টাডি অ্যাট রামগঞ্জ প্রাইমারি স্কুল।<br> আমি রামগঞ্জ প্রাথমিক বিদ্যালয়ে পড়ি।<br><br> ​আই লিভ ইন রামগঞ্জ ভিলেজ।<br> আমার বাড়ি রামগঞ্জ গ্রামে।<br><br> ​আই কাম টু স্কুল এভরি ডে।<br> আমি প্রতিদিন বিদ্যালয়ে আসি।<br><br> ​আই লাভ টু স্টাডি অ্যান্ড প্লে।<br> আমি পড়াশোনা করতে এবং খেলতে ভালোবাসি। <hr> ", id: 8 }
+        ];
+
+        const container = document.getElementById('stanza-container');
+        let activeAudio = null;
+
+        function processLyrics(htmlText, id) {
+            const parts = htmlText.split('<hr>');
+            const actualParts = parts.filter(p => p.trim() !== "");
+            return `
+                <div id="part-segment-${id}" class="lyrics-part">${actualParts[0]}</div>
+                <div id="part-clip-${id}" class="lyrics-part active">${actualParts[1]}</div>
+                <div id="part-full-${id}" class="lyrics-part">${actualParts[2]}</div>
+            `;
+        }
+
+        for (let i = 1; i <= 8; i++) {
+            const section = document.createElement('div');
+            section.className = 'container';
+            section.id = `container-${i}`;
+            section.innerHTML = `
+                <div class="lyrics">${processLyrics(stanzas[i-1].text, i)}</div>
+                <div class="player-card">
+                    <div class="progress-container">
+                        <span id="current-time-${i}">0:00</span>
+                        <input type="range" id="progress-${i}" value="0" min="0" max="100" oninput="seekAudio(${i})">
+                        <span id="duration-${i}">0:00</span>
+                    </div>
+                </div>
+                <div class="button-group" id="btn-group-${i}">
+                    <button class="btn" id="btn-clip-${i}">Loading...</button>
+                    <button class="btn" id="btn-segment-${i}">Loading...</button>
+                    <button class="btn" id="btn-bengali-${i}">Loading...</button>
+                    <button class="btn" id="btn-english-${i}">Loading...</button>
+                </div>
+                <audio id="audio-${i}" preload="auto"></audio>
+            `;
+            container.appendChild(section);
+            setupAudioEvents(i);
+            preloadStanza(i);
+        }
+
+        function setupAudioEvents(id) {
+            const audio = document.getElementById(`audio-${id}`);
+            const progress = document.getElementById(`progress-${id}`);
+            const curTimeTxt = document.getElementById(`current-time-${id}`);
+            const durTimeTxt = document.getElementById(`duration-${id}`);
+
+            audio.ontimeupdate = () => {
+                const val = (audio.currentTime / audio.duration) * 100;
+                progress.value = val || 0;
+                curTimeTxt.innerText = formatTime(audio.currentTime);
+                durTimeTxt.innerText = formatTime(audio.duration);
+            };
+
+            audio.onended = () => {
+                const btnClip = document.getElementById(`btn-clip-${id}`);
+                btnClip.innerText = "Play";
+            };
+        }
+
+        function preloadStanza(id) {
+            const btnClip = document.getElementById(`btn-clip-${id}`);
+            const btnSeg = document.getElementById(`btn-segment-${id}`);
+            const btnBen = document.getElementById(`btn-bengali-${id}`);
+            const btnEng = document.getElementById(`btn-english-${id}`);
+            
+            let clipRdy = false, segRdy = false, benRdy = false, engRdy = false;
+
+            const checkReady = () => {
+                if (clipRdy && segRdy && benRdy && engRdy) {
+                    btnClip.innerText = "Clip";
+                    btnClip.onclick = () => playSong(id, 'clip');
+                    btnSeg.innerText = "Segment";
+                    btnSeg.onclick = () => playSong(id, 'segment');
+                    btnBen.innerText = "Bengali";
+                    btnBen.onclick = () => playSong(id, 'bengali');
+                    btnEng.innerText = "English";
+                    btnEng.onclick = () => playSong(id, 'english');
+
+                    [btnClip, btnSeg, btnBen, btnEng].forEach(b => b.classList.add('downloaded'));
+                }
+            };
+
+            new Audio(musicData[id].clip).oncanplaythrough = () => { clipRdy = true; checkReady(); };
+            new Audio(musicData[id].segment).oncanplaythrough = () => { segRdy = true; checkReady(); };
+            new Audio(musicData[id].bengali).oncanplaythrough = () => { benRdy = true; checkReady(); };
+            new Audio(musicData[id].english).oncanplaythrough = () => { engRdy = true; checkReady(); };
+        }
+
+        function playSong(id, type) {
+            const audio = document.getElementById(`audio-${id}`);
+            const btnClip = document.getElementById(`btn-clip-${id}`);
+
+            document.querySelectorAll('.container').forEach(c => c.style.display = 'none');
+            document.getElementById(`container-${id}`).style.display = 'block';
+            document.getElementById('main-title').style.display = 'none';
+
+            // লিরিক্স হ্যান্ডলিং: Bengali এবং English এর জন্য 'full' পার্ট দেখানো হবে
+            document.querySelectorAll(`#container-${id} .lyrics-part`).forEach(p => p.classList.remove('active'));
+            if (type === 'bengali' || type === 'english') {
+                document.getElementById(`part-full-${id}`).classList.add('active');
+            } else {
+                document.getElementById(`part-${type}-${id}`).classList.add('active');
+            }
+
+            if (activeAudio === audio && audio.dataset.currentType === type) {
+                if (!audio.paused) {
+                    audio.pause();
+                    btnClip.innerText = "Play";
+                } else {
+                    audio.play();
+                    btnClip.innerText = "Pause";
+                }
+                return;
+            }
+
+            if (activeAudio && activeAudio !== audio) {
+                stopAndResetButtons(activeAudio.id.split('-')[1]);
+            }
+
+            audio.src = musicData[id][type];
+            audio.dataset.currentType = type;
+            activeAudio = audio;
+            audio.play();
+
+            updateControls(id);
+        }
+
+        function updateControls(id) {
+            const audio = document.getElementById(`audio-${id}`);
+            const btnClip = document.getElementById(`btn-clip-${id}`);
+            const btnSeg = document.getElementById(`btn-segment-${id}`);
+            const btnBen = document.getElementById(`btn-bengali-${id}`);
+            const btnEng = document.getElementById(`btn-english-${id}`);
+
+            btnClip.innerText = "Pause";
+            btnClip.onclick = () => {
+                if (audio.paused) { audio.play(); btnClip.innerText = "Pause"; }
+                else { audio.pause(); btnClip.innerText = "Play"; }
+            };
+
+            btnSeg.innerText = "Reset";
+            btnSeg.onclick = () => resetUI(id);
+
+            btnBen.innerText = "Replay";
+            btnBen.onclick = () => { audio.currentTime = 0; audio.play(); btnClip.innerText = "Pause"; };
+
+            btnEng.innerText = "Stop"; 
+            btnEng.onclick = () => { audio.pause(); audio.currentTime = 0; btnClip.innerText = "Play"; };
+        }
+
+        function stopAndResetButtons(id) {
+            const audio = document.getElementById(`audio-${id}`);
+            audio.pause();
+            audio.currentTime = 0;
+            
+            const btnClip = document.getElementById(`btn-clip-${id}`);
+            const btnSeg = document.getElementById(`btn-segment-${id}`);
+            const btnBen = document.getElementById(`btn-bengali-${id}`);
+            const btnEng = document.getElementById(`btn-english-${id}`);
+            
+            btnClip.innerText = "Clip";
+            btnClip.onclick = () => playSong(id, 'clip');
+            btnSeg.innerText = "Segment";
+            btnSeg.onclick = () => playSong(id, 'segment');
+            btnBen.innerText = "Bengali";
+            btnBen.onclick = () => playSong(id, 'bengali');
+            btnEng.innerText = "English";
+            btnEng.onclick = () => playSong(id, 'english');
+        }
+
+        function resetUI(id) {
+            const audio = document.getElementById(`audio-${id}`);
+            audio.pause();
+            audio.currentTime = 0;
+            audio.dataset.currentType = "";
+            activeAudio = null;
+
+            document.querySelectorAll('.container').forEach(c => c.style.display = 'block');
+            document.getElementById('main-title').style.display = 'block';
+
+            document.querySelectorAll('.lyrics-part').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('[id^="part-clip-"]').forEach(p => p.classList.add('active'));
+
+            stopAndResetButtons(id);
+
+            document.getElementById(`current-time-${id}`).innerText = "0:00";
+            document.getElementById(`progress-${id}`).value = 0;
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "0:00";
+            let min = Math.floor(seconds / 60);
+            let sec = Math.floor(seconds % 60);
+            return `${min}:${sec < 10 ? '0' + sec : sec}`;
+        }
+
+        function seekAudio(id) {
+            const audio = document.getElementById(`audio-${id}`);
+            const progress = document.getElementById(`progress-${id}`);
+            if (audio.duration) {
+                audio.currentTime = (progress.value / 100) * audio.duration;
+            }
+        }
+    </script>
+</body>
+</html>
