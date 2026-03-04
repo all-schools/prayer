@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clean Premium Index</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f0f2f5; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 450px;
+        }
+
+        .index-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .index-link {
+            display: block;
+            text-decoration: none;
+            padding: 22px;
+            border-radius: 16px;
+            background-color: #ffffff;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08), 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+        }
+
+        .index-link:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.12);
+        }
+
+        .main-text {
+            display: block;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.3px;
+        }
+
+        .sub-text {
+            display: block;
+            font-size: 1rem;
+            color: #7f8c8d;
+            font-weight: 400;
+        }
+
+        /* কার্ড ভিত্তিক বর্ডার এবং বাম পাশের মোটা কালার পার্ট */
+        .card-1 { 
+            border: 2px solid #3498db; 
+            border-left: 10px solid #3498db; 
+        }
+        .card-1 .main-text { color: #2c3e50; }
+
+        .card-2 { 
+            border: 2px solid #2ecc71; 
+            border-left: 10px solid #2ecc71; 
+        }
+        .card-2 .main-text { color: #2c3e50; }
+
+        .card-3 { 
+            border: 2px solid #9b59b6; 
+            border-left: 10px solid #9b59b6; 
+        }
+        .card-3 .main-text { color: #2c3e50; }
+
+        .index-link::after {
+            content: '❯';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #bdc3c7;
+            font-size: 1.1rem;
+            transition: 0.3s;
+        }
+
+        .index-link:hover::after {
+            color: #34495e;
+            right: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="index-list">
+        
+        <a href="#" class="index-link card-1">
+            <span class="main-text">Questions About Me - Bengali</span>
+            <span class="sub-text">পরিচিতি প্রশ্ন - বাংলা</span>
+        </a>
+
+        <a href="#" class="index-link card-2">
+            <span class="main-text">Questions About Me - Bengali-English</span>
+            <span class="sub-text">পরিচিতি প্রশ্ন - বাংলা-ইংরেজি</span>
+        </a>
+
+        <a href="#" class="index-link card-3">
+            <span class="main-text">Questions About Me - English</span>
+            <span class="sub-text">পরিচিতি প্রশ্ন - ইংরেজি</span>
+        </a>
+
+    </div>
+</div>
+
+</body>
+</html>
